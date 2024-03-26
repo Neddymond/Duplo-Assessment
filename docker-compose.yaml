@@ -1,0 +1,50 @@
+version: '3.5'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    env_file:
+      - .env
+    container_name: postgres
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+  
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - '27018:27017'
+    volumes:
+      - ./database:/data/db
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgamin.org
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:  
+      - "5050:80"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nest-docker-postgres
+    environment:
+      - PORT=${PORT}
+      - MONGO_DB_USER=${MONGO_DB_USER}
+      - MONGO_DB_PASS=${MONGO_DB_PASS}
+    ports:
+      - '3000:3000'
+    depends_on:
+      - db
+      - mongodb
+    restart: on-failure:10
+    volumes:
+      - ./src:/app/src  
